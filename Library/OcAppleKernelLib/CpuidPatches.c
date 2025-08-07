@@ -1682,41 +1682,13 @@ PatchProvideCurrentCpuInfo (
   //
   // Perform TSC and FSB calculations. This is traditionally done in tsc.c in XNU.
   //
-  // For AMD Processors
-  if ((CpuInfo->Family == 0xF) && ((CpuInfo->ExtFamily == 0x8) || (CpuInfo->ExtFamily == 0xA) || (CpuInfo->ExtFamily == 0xB))) {
-    DEBUG ((DEBUG_INFO, "OCAK: Setting FSB and TSC for Family 0x%x and ExtFamily 0x%x\n", (UINT16)CpuInfo->Family, (UINT16)CpuInfo->ExtFamily));
-    busFreqValue = CpuInfo->FSBFrequency;
+  busFreqValue    = CpuInfo->FSBFrequency;
+  busFCvtt2nValue = DivU64x64Remainder ((1000000000ULL << 32), busFreqValue, NULL);
+  busFCvtn2tValue = DivU64x64Remainder (0xFFFFFFFFFFFFFFFFULL, busFCvtt2nValue, NULL);
 
-    // Handle case where FSBFrequency is zero, providing a fallback
-    if (busFreqValue == 0) {
-      busFreqValue = 100000000; // Assume 100 MHz FSB as fallback
-      DEBUG ((DEBUG_WARN, "OCAK: FSBFrequency is zero, using fallback value: 100 MHz\n"));
-    }
-
-    busFCvtt2nValue = DivU64x64Remainder ((1000000000ULL << 32), busFreqValue, NULL);
-    busFCvtn2tValue = DivU64x64Remainder ((1000000000ULL << 32), busFCvtt2nValue, NULL);
-
-    tscFreqValue = CpuInfo->CPUFrequency;
-
-    // Handle case where CPUFrequency is zero, providing a fallback
-    if (tscFreqValue == 0) {
-      tscFreqValue = 1000000000; // Assume 1 GHz TSC as fallback
-      DEBUG ((DEBUG_WARN, "OCAK: CPUFrequency is zero, using fallback value: 1 GHz\n"));
-    }
-
-    tscFCvtt2nValue = DivU64x64Remainder ((1000000000ULL << 32), tscFreqValue, NULL);
-    tscFCvtn2tValue = DivU64x64Remainder ((1000000000ULL << 32), tscFCvtt2nValue, NULL);
-  }
-  // For all other processors
-  else {
-    busFreqValue    = CpuInfo->FSBFrequency;
-    busFCvtt2nValue = DivU64x64Remainder ((1000000000ULL << 32), busFreqValue, NULL);
-    busFCvtn2tValue = DivU64x64Remainder (0xFFFFFFFFFFFFFFFFULL, busFCvtt2nValue, NULL);
-
-    tscFreqValue    = CpuInfo->CPUFrequency;
-    tscFCvtt2nValue = DivU64x64Remainder ((1000000000ULL << 32), tscFreqValue, NULL);
-    tscFCvtn2tValue = DivU64x64Remainder (0xFFFFFFFFFFFFFFFFULL, tscFCvtt2nValue, NULL);
-  }
+  tscFreqValue    = CpuInfo->CPUFrequency;
+  tscFCvtt2nValue = DivU64x64Remainder ((1000000000ULL << 32), tscFreqValue, NULL);
+  tscFCvtn2tValue = DivU64x64Remainder (0xFFFFFFFFFFFFFFFFULL, tscFCvtt2nValue, NULL);
 
   tscGranularityValue = DivU64x64Remainder (tscFreqValue, busFreqValue, NULL);
 
